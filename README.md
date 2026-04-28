@@ -17,7 +17,7 @@ Real output is colored: **green** below 50%, **yellow** 50–74%, **red** at 75%
 
 ## Styles
 
-Two progress-bar styles are available. Pick one when you install — to switch later, re-run the installer.
+Two progress-bar styles are available. Pick one when you install. To switch later, either re-run the installer (one-liner path) or edit the `STYLE=` line in `~/.claude/statusline-progress.sh` directly.
 
 **Blocks** (default):
 
@@ -58,6 +58,8 @@ Skip the prompt non-interactively:
 curl -fsSL https://raw.githubusercontent.com/mirzaakhena/claude-code-status-line/main/install.sh \
   | STATUSLINE_STYLE=circles bash
 ```
+
+`STATUSLINE_STYLE` accepts `blocks` or `circles`. Unknown values fall back to `blocks` with a warning.
 
 Restart Claude Code afterward.
 
