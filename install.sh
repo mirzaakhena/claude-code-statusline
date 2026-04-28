@@ -97,7 +97,33 @@ if [ -n "${STATUSLINE_STYLE:-}" ]; then
 fi
 
 if [ -z "$chosen_style" ]; then
-    chosen_style="blocks"
+    if [ -t 1 ] && [ -e /dev/tty ]; then
+        # Interactive: prompt for a choice. Read from /dev/tty so this works
+        # under `curl -fsSL ... | bash`, where stdin is the curl pipe.
+        attempts=0
+        while [ "$attempts" -lt 3 ]; do
+            cat <<'PROMPT'
+
+Choose progress bar style:
+  1) blocks   ████████░░  (default)
+  2) circles  ●●●●●●●●○○
+PROMPT
+            printf "Style [1]: "
+            choice=""
+            read -r choice </dev/tty || choice=""
+            case "$choice" in
+                ""|1|blocks)  chosen_style="blocks"; break ;;
+                2|circles)    chosen_style="circles"; break ;;
+                *)
+                    err "Invalid choice: '$choice'. Enter 1, 2, blocks, or circles."
+                    attempts=$(( attempts + 1 ))
+                    ;;
+            esac
+        done
+        [ -z "$chosen_style" ] && chosen_style="blocks"
+    else
+        chosen_style="blocks"
+    fi
 fi
 
 # Patch the STYLE= line in the installed copy. -i.bak is the spelling that
