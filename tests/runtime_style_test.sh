@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
-# Runtime-side tests for STATUSLINE_STYLE variants. Each case patches a
+# Runtime-side tests for the STYLE shell variable. Each case patches a
 # temp copy of statusline-progress.sh, pipes a fixed JSON sample, and
-# asserts the rendered characters.
+# asserts the rendered characters. The runtime script does not read any
+# env var; STATUSLINE_STYLE is an install-time concept only.
 
 set -euo pipefail
 
