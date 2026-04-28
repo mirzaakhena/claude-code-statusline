@@ -77,6 +77,35 @@ cp "$SOURCE_SCRIPT" "$TARGET_SCRIPT"
 chmod +x "$TARGET_SCRIPT"
 info "Installed: $TARGET_SCRIPT"
 
+# --- pick and bake the progress-bar style ---------------------------------
+
+valid_style() {
+    case "$1" in
+        blocks|circles) return 0 ;;
+        *) return 1 ;;
+    esac
+}
+
+chosen_style=""
+if [ -n "${STATUSLINE_STYLE:-}" ]; then
+    if valid_style "$STATUSLINE_STYLE"; then
+        chosen_style="$STATUSLINE_STYLE"
+    else
+        err "Unknown STATUSLINE_STYLE='$STATUSLINE_STYLE'; falling back to blocks."
+        chosen_style="blocks"
+    fi
+fi
+
+if [ -z "$chosen_style" ]; then
+    chosen_style="blocks"
+fi
+
+# Patch the STYLE= line in the installed copy. -i.bak is the spelling that
+# works on both BSD sed (macOS) and GNU sed (Linux).
+sed -i.bak "s/^STYLE=.*/STYLE=\"$chosen_style\"/" "$TARGET_SCRIPT"
+rm -f "$TARGET_SCRIPT.bak"
+info "Style: $chosen_style"
+
 # --- patch settings.json ---------------------------------------------------
 
 NEW_BLOCK="$(jq -n --arg cmd "$TARGET_SCRIPT" '{statusLine: {type: "command", command: $cmd}}')"
