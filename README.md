@@ -15,6 +15,22 @@ Real output is colored: **green** below 50%, **yellow** 50–74%, **red** at 75%
 - **Context** — context window usage with a 10-segment progress bar and percentage.
 - **Usage** — 5-hour rate-limit usage with a progress bar, percentage, and time remaining until the window resets.
 
+## Styles
+
+Two progress-bar styles are available. Pick one when you install — to switch later, re-run the installer.
+
+**Blocks** (default):
+
+```
+Context ████████░░ 78% │ Usage ███░░░░░░░ 32% (3h 12m / 5h)
+```
+
+**Circles**:
+
+```
+Context ●●●●●●●●○○ 78% │ Usage ●●●○○○○○○○ 32% (3h 12m / 5h)
+```
+
 ## Requirements
 
 - [Claude Code](https://claude.com/claude-code) installed (so `~/.claude/` exists).
@@ -33,7 +49,15 @@ This will:
 
 1. Back up `~/.claude/settings.json` to `~/.claude/settings.json.backup-<timestamp>` (if one exists).
 2. Download `statusline-progress.sh` to `~/.claude/` and make it executable.
-3. Patch `~/.claude/settings.json` to set `statusLine` to the installed script. Other settings are preserved.
+3. Prompt you to choose a style (blocks or circles); your choice is baked into the installed script.
+4. Patch `~/.claude/settings.json` to set `statusLine` to the installed script. Other settings are preserved.
+
+Skip the prompt non-interactively:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/mirzaakhena/claude-code-status-line/main/install.sh \
+  | STATUSLINE_STYLE=circles bash
+```
 
 Restart Claude Code afterward.
 
@@ -48,7 +72,12 @@ If you prefer to install by hand:
    chmod +x ~/.claude/statusline-progress.sh
    ```
 
-2. Open `~/.claude/settings.json` and add (or merge) this block:
+2. Pick a style by editing the `STYLE=` line near the top of `~/.claude/statusline-progress.sh`:
+   ```bash
+   STYLE="blocks"   # or: STYLE="circles"
+   ```
+
+3. Open `~/.claude/settings.json` and add (or merge) this block:
    ```json
    {
      "statusLine": {
@@ -59,7 +88,7 @@ If you prefer to install by hand:
    ```
    Replace `/Users/YOUR_USERNAME` with the absolute path to your home directory (`echo $HOME`).
 
-3. Restart Claude Code.
+4. Restart Claude Code.
 
 ## Uninstall
 
