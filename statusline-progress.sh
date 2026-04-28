@@ -14,6 +14,9 @@ FG_RED="\033[31m"
 FG_WHITE="\033[97m"
 FG_GRAY="\033[90m"
 
+# Progress-bar style: "blocks" or "circles". Patched by install.sh.
+STYLE="blocks"
+
 # ---------------------------------------------------------------------------
 # Progress bar builder
 # $1 = percentage (0-100), $2 = bar width (default 10)
@@ -25,15 +28,27 @@ make_bar() {
     [ "$filled" -gt "$width" ] && filled=$width
     local empty=$(( width - filled ))
 
+    local filled_char empty_char
+    case "$STYLE" in
+        circles)
+            filled_char="\xe2\x97\x8f"  # U+25CF BLACK CIRCLE
+            empty_char="\xe2\x97\x8b"   # U+25CB WHITE CIRCLE
+            ;;
+        *)
+            filled_char="\xe2\x96\x88"  # U+2588 FULL BLOCK
+            empty_char="\xe2\x96\x91"   # U+2591 LIGHT SHADE
+            ;;
+    esac
+
     local bar=""
     local i=0
     while [ "$i" -lt "$filled" ]; do
-        bar="${bar}\xe2\x96\x88"   # U+2588 FULL BLOCK
+        bar="${bar}${filled_char}"
         i=$(( i + 1 ))
     done
     i=0
     while [ "$i" -lt "$empty" ]; do
-        bar="${bar}\xe2\x96\x91"   # U+2591 LIGHT SHADE
+        bar="${bar}${empty_char}"
         i=$(( i + 1 ))
     done
     printf "%b" "$bar"
