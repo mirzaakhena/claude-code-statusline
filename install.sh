@@ -6,7 +6,7 @@
 
 set -euo pipefail
 
-REMOTE_RAW_BASE="https://raw.githubusercontent.com/mirzaakhena/claude-code-status-line/main"
+REMOTE_RAW_BASE="https://raw.githubusercontent.com/mirzaakhena/claude-code-statusline/main"
 SCRIPT_NAME="statusline-progress.sh"
 TARGET_DIR="$HOME/.claude"
 TARGET_SCRIPT="$TARGET_DIR/$SCRIPT_NAME"

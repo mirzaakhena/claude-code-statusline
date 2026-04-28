@@ -1,14 +1,12 @@
-# claude-code-status-line
+# claude-code-statusline
 
 A progress-bar status line for [Claude Code](https://claude.com/claude-code). Shows your context window usage and 5-hour rate-limit usage at a glance.
 
 ## Preview
 
-```
-Context ████████░░ 78% │ Usage ███░░░░░░░ 32% (3h 12m / 5h)
-```
+![Preview](./screenshot.png)
 
-Real output is colored: **green** below 50%, **yellow** 50–74%, **red** at 75% and above.
+Output is colored: **green** below 50%, **yellow** 50–74%, **red** at 75% and above.
 
 ## What it shows
 
@@ -42,7 +40,7 @@ Context ●●●●●●●●○○ 78% │ Usage ●●●○○○○○○
 ## Install — one-liner
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/mirzaakhena/claude-code-status-line/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/mirzaakhena/claude-code-statusline/main/install.sh | bash
 ```
 
 This will:
@@ -55,7 +53,7 @@ This will:
 Skip the prompt non-interactively:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/mirzaakhena/claude-code-status-line/main/install.sh \
+curl -fsSL https://raw.githubusercontent.com/mirzaakhena/claude-code-statusline/main/install.sh \
   | STATUSLINE_STYLE=circles bash
 ```
 
@@ -69,7 +67,7 @@ If you prefer to install by hand:
 
 1. Download the script:
    ```bash
-   curl -fsSL https://raw.githubusercontent.com/mirzaakhena/claude-code-status-line/main/statusline-progress.sh \
+   curl -fsSL https://raw.githubusercontent.com/mirzaakhena/claude-code-statusline/main/statusline-progress.sh \
      -o ~/.claude/statusline-progress.sh
    chmod +x ~/.claude/statusline-progress.sh
    ```
