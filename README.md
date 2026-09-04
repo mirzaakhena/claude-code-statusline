@@ -10,24 +10,33 @@ Output is colored: **green** below 50%, **yellow** 50–74%, **red** at 75% and 
 
 ## What it shows
 
-- **Context** — context window usage with a 10-segment progress bar and percentage.
-- **Usage** — 5-hour rate-limit usage with a progress bar, percentage, and time remaining until the window resets.
+- **Context** — context window usage with a 10-dot gauge and percentage.
+- **Usage** — 5-hour rate-limit usage with a gauge, percentage, and time remaining until the window resets.
 
-## Styles
+## The gauge
 
-Two progress-bar styles are available. Pick one when you install. To switch later, either re-run the installer (one-liner path) or edit the `STYLE=` line in `~/.claude/statusline-progress.sh` directly.
+Each dot holds four quarter-steps, so a 10-dot gauge resolves **2.5%** rather than 10%:
 
-**Blocks** (default):
+| Glyph | Codepoint | Fill |
+| :---: | --------- | ---- |
+| `○` | U+25CB | empty |
+| `◔` | U+25D4 | ¼ |
+| `◐` | U+25D0 | ½ |
+| `◕` | U+25D5 | ¾ |
+| `●` | U+25CF | full |
 
 ```
-Context ████████░░ 78% │ Usage ███░░░░░░░ 32% (3h 12m / 5h)
+  1%  ◔○○○○○○○○○
+ 23%  ●●◔○○○○○○○
+ 50%  ●●●●●○○○○○
+ 68%  ●●●●●●◕○○○
+ 99%  ●●●●●●●●●◕
+100%  ●●●●●●●●●●
 ```
 
-**Circles**:
+Both ends of the scale are clamped on purpose: the gauge never reads empty while anything is in use, and never reads full before the value actually reaches 100%.
 
-```
-Context ●●●●●●●●○○ 78% │ Usage ●●●○○○○○○○ 32% (3h 12m / 5h)
-```
+The partial glyphs come from the same Unicode block as `○` and `●`, so any font that renders those renders the quarters at a matching size. Their on-screen size follows your terminal's font size; it is not something the script controls.
 
 ## Requirements
 
@@ -47,17 +56,9 @@ This will:
 
 1. Back up `~/.claude/settings.json` to `~/.claude/settings.json.backup-<timestamp>` (if one exists).
 2. Download `statusline-progress.sh` to `~/.claude/` and make it executable.
-3. Prompt you to choose a style (blocks or circles); your choice is baked into the installed script.
-4. Patch `~/.claude/settings.json` to set `statusLine` to the installed script. Other settings are preserved.
+3. Patch `~/.claude/settings.json` to set `statusLine` to the installed script. Other settings are preserved.
 
-Skip the prompt non-interactively:
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/mirzaakhena/claude-code-statusline/main/install.sh \
-  | STATUSLINE_STYLE=circles bash
-```
-
-`STATUSLINE_STYLE` accepts `blocks` or `circles`. Unknown values fall back to `blocks` with a warning.
+The installer is non-interactive and asks nothing.
 
 Restart Claude Code afterward.
 
@@ -72,12 +73,7 @@ If you prefer to install by hand:
    chmod +x ~/.claude/statusline-progress.sh
    ```
 
-2. Pick a style by editing the `STYLE=` line near the top of `~/.claude/statusline-progress.sh`:
-   ```bash
-   STYLE="blocks"   # or: STYLE="circles"
-   ```
-
-3. Open `~/.claude/settings.json` and add (or merge) this block:
+2. Open `~/.claude/settings.json` and add (or merge) this block:
    ```json
    {
      "statusLine": {
@@ -88,7 +84,7 @@ If you prefer to install by hand:
    ```
    Replace `/Users/YOUR_USERNAME` with the absolute path to your home directory (`echo $HOME`).
 
-4. Restart Claude Code.
+3. Restart Claude Code.
 
 ## Uninstall
 
@@ -101,6 +97,13 @@ Either:
   ```
 
 - Or manually remove the `statusLine` key from `~/.claude/settings.json` and delete `~/.claude/statusline-progress.sh`.
+
+## Tests
+
+```bash
+bash tests/render_test.sh
+bash tests/install_test.sh
+```
 
 ## License
 
