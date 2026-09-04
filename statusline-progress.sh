@@ -14,43 +14,55 @@ FG_RED="\033[31m"
 FG_WHITE="\033[97m"
 FG_GRAY="\033[90m"
 
-# Progress-bar style: "blocks" or "circles". Patched by install.sh.
-STYLE="blocks"
+# ---------------------------------------------------------------------------
+# Gauge glyphs: each dot holds 4 quarter-steps, so a 10-dot bar resolves 2.5%
+# ---------------------------------------------------------------------------
+DOT_EMPTY="\xe2\x97\x8b"    # U+25CB WHITE CIRCLE                             (0)
+DOT_Q1="\xe2\x97\x94"       # U+25D4 CIRCLE WITH UPPER RIGHT QUADRANT BLACK   (1/4)
+DOT_Q2="\xe2\x97\x90"       # U+25D0 CIRCLE WITH LEFT HALF BLACK              (1/2)
+DOT_Q3="\xe2\x97\x95"       # U+25D5 CIRCLE WITH ALL BUT UPPER LEFT QUADRANT  (3/4)
+DOT_FULL="\xe2\x97\x8f"     # U+25CF BLACK CIRCLE                             (1)
 
 # ---------------------------------------------------------------------------
 # Progress bar builder
-# $1 = percentage (0-100), $2 = bar width (default 10)
+# $1 = percentage (0-100), $2 = bar width in dots (default 10)
 # ---------------------------------------------------------------------------
 make_bar() {
     local pct=$1
     local width=${2:-10}
-    local filled=$(( pct * width / 100 ))
-    [ "$filled" -gt "$width" ] && filled=$width
-    local empty=$(( width - filled ))
+    local max=$(( width * 4 ))
 
-    local filled_char empty_char
-    case "$STYLE" in
-        circles)
-            filled_char="\xe2\x97\x8f"  # U+25CF BLACK CIRCLE
-            empty_char="\xe2\x97\x8b"   # U+25CB WHITE CIRCLE
-            ;;
-        *)
-            filled_char="\xe2\x96\x88"  # U+2588 FULL BLOCK
-            empty_char="\xe2\x96\x91"   # U+2591 LIGHT SHADE
-            ;;
-    esac
+    # Fill level in quarter-steps, rounded to nearest
+    local quarters=$(( (pct * max + 50) / 100 ))
+    [ "$quarters" -lt 0 ] && quarters=0
+    [ "$quarters" -gt "$max" ] && quarters=$max
+
+    # Keep the extremes honest: never draw an empty bar while something is in
+    # use, never draw a full bar before it actually is full.
+    [ "$quarters" -eq 0 ] && [ "$pct" -gt 0 ] && quarters=1
+    [ "$quarters" -eq "$max" ] && [ "$pct" -lt 100 ] && quarters=$(( max - 1 ))
+
+    local full=$(( quarters / 4 ))
+    local rem=$(( quarters % 4 ))
 
     local bar=""
-    local i=0
-    while [ "$i" -lt "$filled" ]; do
-        bar="${bar}${filled_char}"
-        i=$(( i + 1 ))
+    local drawn=0
+    while [ "$drawn" -lt "$full" ]; do
+        bar="${bar}${DOT_FULL}"
+        drawn=$(( drawn + 1 ))
     done
-    i=0
-    while [ "$i" -lt "$empty" ]; do
-        bar="${bar}${empty_char}"
-        i=$(( i + 1 ))
+
+    case "$rem" in
+        1) bar="${bar}${DOT_Q1}"; drawn=$(( drawn + 1 )) ;;
+        2) bar="${bar}${DOT_Q2}"; drawn=$(( drawn + 1 )) ;;
+        3) bar="${bar}${DOT_Q3}"; drawn=$(( drawn + 1 )) ;;
+    esac
+
+    while [ "$drawn" -lt "$width" ]; do
+        bar="${bar}${DOT_EMPTY}"
+        drawn=$(( drawn + 1 ))
     done
+
     printf "%b" "$bar"
 }
 
