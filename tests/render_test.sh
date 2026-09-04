@@ -1,70 +1,74 @@
 #!/usr/bin/env bash
-# Runtime-side tests for the STYLE shell variable. Each case patches a
-# temp copy of statusline-progress.sh, pipes a fixed JSON sample, and
-# asserts the rendered characters. The runtime script does not read any
-# env var; STATUSLINE_STYLE is an install-time concept only.
+# Rendering tests for the quarter-resolution gauge. Each case pipes a fixed
+# JSON sample into statusline-progress.sh and asserts the exact bar string.
+#
+# One dot holds four quarter-steps, so a 10-dot bar resolves 2.5%:
+#   ○ (0)  ◔ (1/4)  ◐ (1/2)  ◕ (3/4)  ● (full)
 
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 SOURCE_SCRIPT="$REPO_ROOT/statusline-progress.sh"
 
-# A 50% / 30% snapshot. With width 10 that's 5 filled + 5 empty for Context.
-SAMPLE_JSON='{"context_window":{"used_percentage":50},"rate_limits":{"five_hour":{"used_percentage":30,"resets_at":9999999999}}}'
-
-assert_contains() {
-    local desc="$1" haystack="$2" needle="$3"
-    if printf '%s' "$haystack" | grep -q -- "$needle"; then
-        echo "  PASS: $desc"
-    else
-        echo "  FAIL: $desc"
-        echo "    Expected to find: $needle"
-        echo "    In output:        $haystack"
-        exit 1
-    fi
+render() {
+    local pct="$1"
+    printf '{"context_window":{"used_percentage":%s},"rate_limits":{"five_hour":{"used_percentage":%s,"resets_at":9999999999}}}' \
+        "$pct" "$pct" | bash "$SOURCE_SCRIPT"
 }
 
-assert_not_contains() {
-    local desc="$1" haystack="$2" needle="$3"
-    if ! printf '%s' "$haystack" | grep -q -- "$needle"; then
-        echo "  PASS: $desc"
-    else
-        echo "  FAIL: $desc"
-        echo "    Did not expect:  $needle"
-        echo "    In output:       $haystack"
-        exit 1
-    fi
-}
-
-run_with_style() {
-    local style="$1"
-    local tmp
-    tmp="$(mktemp -t statusline-runtime.XXXXXX)"
-    cp "$SOURCE_SCRIPT" "$tmp"
-    sed -i.bak "s/^STYLE=.*/STYLE=\"$style\"/" "$tmp"
-    rm -f "$tmp.bak"
-    chmod +x "$tmp"
+assert_bar() {
+    local pct="$1" expected="$2"
     local output
-    output="$(printf '%s' "$SAMPLE_JSON" | bash "$tmp")"
-    rm -f "$tmp"
-    printf '%s' "$output"
+    output="$(render "$pct")"
+    if printf '%s' "$output" | grep -qF -- "$expected"; then
+        echo "  PASS: ${pct}% renders $expected"
+    else
+        echo "  FAIL: ${pct}% did not render $expected"
+        echo "    In output: $output"
+        exit 1
+    fi
 }
 
-echo "Test 1: STYLE=blocks renders block characters"
-out="$(run_with_style blocks)"
-assert_contains "output contains █ (U+2588)" "$out" $'\xe2\x96\x88'
-assert_contains "output contains ░ (U+2591)" "$out" $'\xe2\x96\x91'
+assert_absent() {
+    local desc="$1" pct="$2" needle="$3"
+    local output
+    output="$(render "$pct")"
+    if printf '%s' "$output" | grep -qF -- "$needle"; then
+        echo "  FAIL: $desc"
+        echo "    Did not expect '$needle' in: $output"
+        exit 1
+    fi
+    echo "  PASS: $desc"
+}
 
-echo "Test 2: STYLE=circles renders circle characters"
-out="$(run_with_style circles)"
-assert_contains "output contains ● (U+25CF)" "$out" $'\xe2\x97\x8f'
-assert_contains "output contains ○ (U+25CB)" "$out" $'\xe2\x97\x8b'
-assert_not_contains "output has no block char" "$out" $'\xe2\x96\x88'
+echo "Test 1: whole-dot boundaries"
+assert_bar 0   "○○○○○○○○○○"
+assert_bar 50  "●●●●●○○○○○"
+assert_bar 100 "●●●●●●●●●●"
 
-echo "Test 3: STYLE=invalid falls back to blocks"
-out="$(run_with_style bogus)"
-assert_contains "output contains █ (fallback)" "$out" $'\xe2\x96\x88'
-assert_not_contains "output has no circle char" "$out" $'\xe2\x97\x8f'
+echo "Test 2: quarter steps within a dot"
+assert_bar 23 "●●◔○○○○○○○"
+assert_bar 25 "●●◐○○○○○○○"
+assert_bar 68 "●●●●●●◕○○○"
+
+echo "Test 3: a non-zero percentage never renders an empty bar"
+assert_bar 1 "◔○○○○○○○○○"
+assert_absent "0% has no filled glyph" 0 "◔"
+
+echo "Test 4: a bar is only full at exactly 100%"
+assert_bar 99 "●●●●●●●●●◕"
+assert_absent "100% has no empty glyph" 100 "○"
+
+echo "Test 5: missing fields fall back to placeholders"
+out="$(printf '{}' | bash "$SOURCE_SCRIPT")"
+for needle in "Context --" "Usage --"; do
+    if printf '%s' "$out" | grep -qF -- "$needle"; then
+        echo "  PASS: renders '$needle' when the field is absent"
+    else
+        echo "  FAIL: expected '$needle' in: $out"
+        exit 1
+    fi
+done
 
 echo
-echo "All runtime style tests passed."
+echo "All render tests passed."

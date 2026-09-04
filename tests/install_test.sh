@@ -43,8 +43,10 @@ HOME="$HOME_DIR" bash "$INSTALLER" >/dev/null
 
 assert "statusline-progress.sh installed" "[ -f \"$HOME_DIR/.claude/statusline-progress.sh\" ]"
 assert "installed script is executable"   "[ -x \"$HOME_DIR/.claude/statusline-progress.sh\" ]"
-assert "installed script has STYLE=\"blocks\" (default)" \
-    "grep -qE '^STYLE=\"blocks\"\$' \"$HOME_DIR/.claude/statusline-progress.sh\""
+assert "installed script matches the repo source" \
+    "cmp -s \"$SOURCE_SCRIPT\" \"$HOME_DIR/.claude/statusline-progress.sh\""
+assert "no leftover sed backup file" \
+    "! [ -f \"$HOME_DIR/.claude/statusline-progress.sh.bak\" ]"
 assert "settings.json was created"        "[ -f \"$HOME_DIR/.claude/settings.json\" ]"
 assert "settings.json has statusLine.type=command" \
     "[ \"\$(jq -r '.statusLine.type' \"$HOME_DIR/.claude/settings.json\")\" = command ]"
@@ -101,42 +103,6 @@ set -e
 
 assert "installer exits non-zero when ~/.claude/ missing" "[ $rc -ne 0 ]"
 assert "no settings.json was created" "! [ -f \"$HOME_DIR/.claude/settings.json\" ]"
-
-rm -rf "$HOME_DIR"
-trap - EXIT
-
-# ---------------------------------------------------------------------------
-# Test 4: STATUSLINE_STYLE=circles bakes circles into the installed script
-# ---------------------------------------------------------------------------
-echo "Test 4: STATUSLINE_STYLE=circles installs the circles variant"
-HOME_DIR="$(make_fake_home)"
-trap 'rm -rf "$HOME_DIR"' EXIT
-
-HOME="$HOME_DIR" STATUSLINE_STYLE=circles bash "$INSTALLER" >/dev/null
-
-assert "installed script has STYLE=\"circles\"" \
-    "grep -qE '^STYLE=\"circles\"\$' \"$HOME_DIR/.claude/statusline-progress.sh\""
-assert "no leftover sed backup file" \
-    "! [ -f \"$HOME_DIR/.claude/statusline-progress.sh.bak\" ]"
-
-rm -rf "$HOME_DIR"
-trap - EXIT
-
-# ---------------------------------------------------------------------------
-# Test 5: invalid STATUSLINE_STYLE falls back to blocks (still exit 0)
-# ---------------------------------------------------------------------------
-echo "Test 5: invalid STATUSLINE_STYLE falls back to blocks"
-HOME_DIR="$(make_fake_home)"
-trap 'rm -rf "$HOME_DIR"' EXIT
-
-set +e
-HOME="$HOME_DIR" STATUSLINE_STYLE=neon bash "$INSTALLER" >/dev/null 2>&1
-rc=$?
-set -e
-
-assert "installer still exits 0 on invalid style" "[ $rc -eq 0 ]"
-assert "installed script falls back to STYLE=\"blocks\"" \
-    "grep -qE '^STYLE=\"blocks\"\$' \"$HOME_DIR/.claude/statusline-progress.sh\""
 
 rm -rf "$HOME_DIR"
 trap - EXIT
