@@ -77,61 +77,6 @@ cp "$SOURCE_SCRIPT" "$TARGET_SCRIPT"
 chmod +x "$TARGET_SCRIPT"
 info "Installed: $TARGET_SCRIPT"
 
-# --- pick and bake the progress-bar style ---------------------------------
-
-valid_style() {
-    case "$1" in
-        blocks|circles) return 0 ;;
-        *) return 1 ;;
-    esac
-}
-
-chosen_style=""
-if [ -n "${STATUSLINE_STYLE:-}" ]; then
-    if valid_style "$STATUSLINE_STYLE"; then
-        chosen_style="$STATUSLINE_STYLE"
-    else
-        err "Unknown STATUSLINE_STYLE='$STATUSLINE_STYLE'; falling back to blocks."
-        chosen_style="blocks"
-    fi
-fi
-
-if [ -z "$chosen_style" ]; then
-    if [ -t 1 ] && [ -e /dev/tty ]; then
-        # Interactive: prompt for a choice. Read from /dev/tty so this works
-        # under `curl -fsSL ... | bash`, where stdin is the curl pipe.
-        attempts=0
-        while [ "$attempts" -lt 3 ]; do
-            cat <<'PROMPT'
-
-Choose progress bar style:
-  1) blocks   ████████░░  (default)
-  2) circles  ●●●●●●●●○○
-PROMPT
-            printf "Style [1]: "
-            choice=""
-            read -r choice </dev/tty || choice=""
-            case "$choice" in
-                ""|1|blocks)  chosen_style="blocks"; break ;;
-                2|circles)    chosen_style="circles"; break ;;
-                *)
-                    err "Invalid choice: '$choice'. Enter 1, 2, blocks, or circles."
-                    attempts=$(( attempts + 1 ))
-                    ;;
-            esac
-        done
-        [ -z "$chosen_style" ] && chosen_style="blocks"
-    else
-        chosen_style="blocks"
-    fi
-fi
-
-# Patch the STYLE= line in the installed copy. -i.bak is the spelling that
-# works on both BSD sed (macOS) and GNU sed (Linux).
-sed -i.bak "s/^STYLE=.*/STYLE=\"$chosen_style\"/" "$TARGET_SCRIPT"
-rm -f "$TARGET_SCRIPT.bak"
-info "Style: $chosen_style"
-
 # --- patch settings.json ---------------------------------------------------
 
 NEW_BLOCK="$(jq -n --arg cmd "$TARGET_SCRIPT" '{statusLine: {type: "command", command: $cmd}}')"
