@@ -21,7 +21,7 @@ Each dot holds four quarter-steps, so a 10-dot gauge resolves **2.5%** rather th
 | :---: | --------- | ---- |
 | `○` | U+25CB | empty |
 | `◔` | U+25D4 | ¼ |
-| `◐` | U+25D0 | ½ |
+| `◑` | U+25D1 | ½ |
 | `◕` | U+25D5 | ¾ |
 | `●` | U+25CF | full |
 

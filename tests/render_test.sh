@@ -3,7 +3,7 @@
 # JSON sample into statusline-progress.sh and asserts the exact bar string.
 #
 # One dot holds four quarter-steps, so a 10-dot bar resolves 2.5%:
-#   ○ (0)  ◔ (1/4)  ◐ (1/2)  ◕ (3/4)  ● (full)
+#   ○ (0)  ◔ (1/4)  ◑ (1/2)  ◕ (3/4)  ● (full)
 
 set -euo pipefail
 
@@ -48,7 +48,7 @@ assert_bar 100 "●●●●●●●●●●"
 
 echo "Test 2: quarter steps within a dot"
 assert_bar 23 "●●◔○○○○○○○"
-assert_bar 25 "●●◐○○○○○○○"
+assert_bar 25 "●●◑○○○○○○○"
 assert_bar 68 "●●●●●●◕○○○"
 
 echo "Test 3: a non-zero percentage never renders an empty bar"

@@ -19,7 +19,7 @@ FG_GRAY="\033[90m"
 # ---------------------------------------------------------------------------
 DOT_EMPTY="\xe2\x97\x8b"    # U+25CB WHITE CIRCLE                             (0)
 DOT_Q1="\xe2\x97\x94"       # U+25D4 CIRCLE WITH UPPER RIGHT QUADRANT BLACK   (1/4)
-DOT_Q2="\xe2\x97\x90"       # U+25D0 CIRCLE WITH LEFT HALF BLACK              (1/2)
+DOT_Q2="\xe2\x97\x91"       # U+25D1 CIRCLE WITH RIGHT HALF BLACK             (1/2)
 DOT_Q3="\xe2\x97\x95"       # U+25D5 CIRCLE WITH ALL BUT UPPER LEFT QUADRANT  (3/4)
 DOT_FULL="\xe2\x97\x8f"     # U+25CF BLACK CIRCLE                             (1)
 
