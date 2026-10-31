@@ -96,30 +96,48 @@ else
 fi
 
 # ---------------------------------------------------------------------------
-# 5-hour session rate-limit usage
+# Rate-limit usage
+#
+# Show the 5-hour window whenever Claude Code reports it (Pro, Max, unverified
+# Ultra). Verified Ultra accounts have no 5-hour limit, so the window is absent
+# and the weekly one is shown instead. Decided from the data, not the plan: the
+# status line input does not name the plan, and the same plan can go either way.
 # ---------------------------------------------------------------------------
-five_pct=$(echo "$input" | jq -r '.rate_limits.five_hour.used_percentage // empty')
-five_resets=$(echo "$input" | jq -r '.rate_limits.five_hour.resets_at // empty')
+limit_pct=$(echo "$input" | jq -r '.rate_limits.five_hour.used_percentage // empty')
+limit_resets=$(echo "$input" | jq -r '.rate_limits.five_hour.resets_at // empty')
+limit_span="5h"
+
+if [ -z "$limit_pct" ]; then
+    limit_pct=$(echo "$input" | jq -r '.rate_limits.seven_day.used_percentage // empty')
+    limit_resets=$(echo "$input" | jq -r '.rate_limits.seven_day.resets_at // empty')
+    limit_span="7d"
+fi
 
 usage_label=""
-if [ -n "$five_pct" ]; then
-    five_int=$(printf "%.0f" "$five_pct")
-    bar=$(make_bar "$five_int" 10)
-    color=$(pct_color "$five_int")
+if [ -n "$limit_pct" ]; then
+    limit_int=$(printf "%.0f" "$limit_pct")
+    bar=$(make_bar "$limit_int" 10)
+    color=$(pct_color "$limit_int")
 
     # Build human-readable time-remaining string from resets_at epoch
     time_info=""
-    if [ -n "$five_resets" ] && [ "$five_resets" != "null" ]; then
+    if [ -n "$limit_resets" ]; then
         now=$(date +%s)
-        remaining_secs=$(( five_resets - now ))
+        remaining_secs=$(( limit_resets - now ))
         if [ "$remaining_secs" -gt 0 ]; then
-            rem_h=$(( remaining_secs / 3600 ))
+            rem_d=$(( remaining_secs / 86400 ))
+            rem_h=$(( (remaining_secs % 86400) / 3600 ))
             rem_m=$(( (remaining_secs % 3600) / 60 ))
-            time_info=" ${DIM}${FG_GRAY}(${rem_h}h ${rem_m}m / 5h)${RESET}"
+            if [ "$rem_d" -gt 0 ]; then
+                remaining="${rem_d}d ${rem_h}h"
+            else
+                remaining="${rem_h}h ${rem_m}m"
+            fi
+            time_info=" ${DIM}${FG_GRAY}(${remaining} / ${limit_span})${RESET}"
         fi
     fi
 
-    usage_label="${BOLD}${FG_WHITE}Usage${RESET} ${color}${bar}${RESET} ${color}${five_int}%${RESET}${time_info}"
+    usage_label="${BOLD}${FG_WHITE}Usage${RESET} ${color}${bar}${RESET} ${color}${limit_int}%${RESET}${time_info}"
 else
     usage_label="${DIM}${FG_GRAY}Usage --${RESET}"
 fi

@@ -70,5 +70,42 @@ for needle in "Context --" "Usage --"; do
     fi
 done
 
+strip_ansi() { sed $'s/\033\\[[0-9;]*m//g'; }
+
+assert_usage() {
+    local desc="$1" json="$2" expected="$3" output
+    output="$(printf '%s' "$json" | bash "$SOURCE_SCRIPT" | strip_ansi)"
+    if printf '%s' "$output" | grep -qF -- "$expected"; then
+        echo "  PASS: $desc"
+    else
+        echo "  FAIL: $desc"
+        echo "    Expected '$expected' in: $output"
+        exit 1
+    fi
+}
+
+now="$(date +%s)"
+in_2h=$(( now + 2 * 3600 + 630 ))
+in_36h=$(( now + 36 * 3600 + 630 ))
+
+echo "Test 6: the 5-hour window wins when it is reported (Pro, Max, unverified Ultra)"
+assert_usage "both windows show the 5-hour one" \
+    "{\"rate_limits\":{\"five_hour\":{\"used_percentage\":33,\"resets_at\":$in_2h},\"seven_day\":{\"used_percentage\":61,\"resets_at\":$in_36h}}}" \
+    "33% (2h 10m / 5h)"
+
+echo "Test 7: weekly window when no 5-hour window is reported (verified Ultra)"
+assert_usage "weekly over a day away shows days and hours" \
+    "{\"rate_limits\":{\"seven_day\":{\"used_percentage\":61,\"resets_at\":$in_36h}}}" \
+    "61% (1d 12h / 7d)"
+assert_usage "weekly under a day away shows hours and minutes" \
+    "{\"rate_limits\":{\"seven_day\":{\"used_percentage\":61,\"resets_at\":$in_2h}}}" \
+    "61% (2h 10m / 7d)"
+assert_usage "explicit null 5-hour window also falls back" \
+    "{\"rate_limits\":{\"five_hour\":null,\"seven_day\":{\"used_percentage\":61,\"resets_at\":$in_36h}}}" \
+    "61% (1d 12h / 7d)"
+
+echo "Test 8: empty rate_limits keeps the placeholder"
+assert_usage "no windows renders the placeholder" '{"rate_limits":{}}' "Usage --"
+
 echo
 echo "All render tests passed."
