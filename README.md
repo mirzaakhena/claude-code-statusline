@@ -1,6 +1,6 @@
 # claude-code-statusline
 
-A progress-bar status line for [Claude Code](https://claude.com/claude-code). Shows your context window usage and 5-hour rate-limit usage at a glance.
+A progress-bar status line for [Claude Code](https://claude.com/claude-code). Shows your context window usage and rate-limit usage at a glance.
 
 ## Preview
 
@@ -11,7 +11,16 @@ Output is colored: **green** below 50%, **yellow** 50–74%, **red** at 75% and 
 ## What it shows
 
 - **Context** — context window usage with a 10-dot gauge and percentage.
-- **Usage** — 5-hour rate-limit usage with a gauge, percentage, and time remaining until the window resets.
+- **Usage** — rate-limit usage with a gauge, percentage, and time remaining until the window resets.
+
+Which window **Usage** shows depends on what Claude Code reports for your account:
+
+| Account | Window | Example |
+| ------- | ------ | ------- |
+| Pro, Max, unverified Ultra | 5-hour | `Usage ●●●◔○○○○○○ 33% (2h 10m / 5h)` |
+| Verified Ultra (no 5-hour limit) | Weekly | `Usage ●●●●●●○○○○ 61% (1d 12h / 7d)` |
+
+The suffix `/ 5h` or `/ 7d` tells you which one you are looking at. The separate weekly Fable limit is not shown, because Claude Code does not report it to status lines.
 
 ## The gauge
 
